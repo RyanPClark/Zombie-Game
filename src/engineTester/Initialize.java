@@ -29,8 +29,8 @@ public final class Initialize {
 	private static List<List<List<TexturedModel>>> texturedGunZ = null;
 	private static List<List<Vector2f>> collisions;
 	
-	public static void init(Loader load){
-		loader = load;
+	public static void init(Loader loader){
+		Initialize.loader = loader;
 	}
 	
 	private static TexturedModel loadModel(String textureID, String ModelID, float reflectivity, float shine_damper, boolean transparency
@@ -57,11 +57,9 @@ public final class Initialize {
 		TerrainTexture blendMap = new TerrainTexture(loader.loadTexture(MyPaths.makeTexturePath("Terrain/"+_blendMap)));
 		
 		TerrainTexturePack texturePack = new TerrainTexturePack(backgroundTexture, rTexture, gTexture, bTexture);
-		
 		Terrain terrain = new Terrain(x, z, loader, texturePack, blendMap, "Terrain/"+_heightmap);
 		
 		return terrain;
-		
 	}
 	
 	protected static Gun loadGun(int weaponID){
@@ -71,8 +69,8 @@ public final class Initialize {
 		gun = GunLoader.Load(gun, weaponID);
 		
 		return gun;
-		
 	}
+	
 	public static MultiModeledEntity loadMultiModeledEntity(String name, Vector3f position, float rotX, float rotY, float rotZ, Vector3f scale,
 			int TextureAtlasID, boolean transparency, float shineDamper, float reflectivity,
 			boolean fakeLighting, int frustumFactor, int number_of_parts, boolean b_model){
@@ -95,10 +93,10 @@ public final class Initialize {
 		
 		return new MultiModeledEntity(masterList, position, rotX, rotY, rotZ, scale, name, b_model, number_of_parts, true);
 	}
+	
 	public static List<List<Vector2f>> loadCollisions() {
 		
 		collisions = Reading.readCollisions("collisions");
-		
 		return collisions;
 	}
 	public static MultiModeledEntity newMultiModeledEntity(String name, Vector3f position, int parts, boolean b_model){

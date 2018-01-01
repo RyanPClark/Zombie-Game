@@ -13,20 +13,10 @@ public final class Statics {
 	public static final int FRUSTUM_CENTER = -90;
 	public static final int FRUSTUM_ANGLE = (int) (FOV/2);
 	
-	public static final float RUN_SPEED = 0.3f;
-	public static final float GRAVITY = -0.055f;
-	public static final float JUMP_POWER = 0.7f;
-	public static final float sprintModifier = 1.4f;
-	public static final float scopeSlowdown = 0.6f;
-	public static final float maxPitch = 50;
-	public static final float minPitch = -7.5f;
 	public static final float devLookUpSpeed = 0.5f;
 	public static final float devLookSideSpeed = 1f;
-	public static final float CAM_HEIGHT = 6.4f;
 	public static final int flySpeed = 5;
 	public static final int terrainBounds = 125;
-	public static final int rotationCheckFrequency = 4;
-	public static final int lookSpeed = 20;
 	public static final int max_health = 64;
 	
 	public static final int reloadTime = 75;
@@ -74,8 +64,6 @@ public final class Statics {
 	public static final int WIDTH = 1080;
 	public static final int HEIGHT = 720;
 	public static final int FPS_CAP = 60;
-	
-	public static final int ANTI_ALIASING_LEVEL = 1;
 	
 	public static final int ANISOTROPIC_LEVEL = 1;
 	public static final float LOD_BIAS = 0.4f;

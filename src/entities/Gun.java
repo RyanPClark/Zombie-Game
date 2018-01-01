@@ -6,10 +6,10 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Vector3f;
 
-import components.AttackPlayer;
 import components.Statics;
 import renderEngine.MasterRenderer;
 import sound.Sound;
+import toolbox.GameMath;
 
 
 public class Gun extends MultiModeledEntity{
@@ -142,7 +142,7 @@ public class Gun extends MultiModeledEntity{
 			scope(masterRenderer);
 		}
 		
-		gunPosition = AttackPlayer.moveGunFromPlayer(gunPosition, movingValues[0],
+		gunPosition = GameMath.moveGunFromPlayer(gunPosition, movingValues[0],
 				camera.getYaw()+movingValues[1]-zoomAmount/movingValues[2] + bobMult * bobCounter/Statics.bobSpeed);
 	}
 	

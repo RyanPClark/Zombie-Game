@@ -2,9 +2,6 @@ package toolbox;
 
 import java.util.Random;
 
-import maps.Map;
-
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
@@ -12,9 +9,7 @@ import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import entities.Camera;
-import entities.MultiModeledEntity;
 import entities.ParticleEmitter;
-import enums.Mode;
 
 public final class MousePicker {
 
@@ -23,15 +18,13 @@ public final class MousePicker {
 
 	private Matrix4f projectionMatrix, viewMatrix;
 	private Camera camera;
-	private Map map;
 	
 	private int gunOffset = 150;
 
-	public MousePicker(Camera cam, Matrix4f projection, Map _map) {
+	public MousePicker(Camera cam, Matrix4f projection) {
 		camera = cam;
 		projectionMatrix = projection;
 		viewMatrix = GameMath.createViewMatrix(camera);
-		map = _map;
 	}
 	
 	public void setOffset(int offset){
@@ -46,36 +39,17 @@ public final class MousePicker {
 		return realRay;
 	}
 
-	public void update(Mode mode) {
+	public void update() {
 		
 		viewMatrix = GameMath.createViewMatrix(camera);
-		currentRay = calculateMouseRay(mode);
+		currentRay = calculateMouseRay();
 		realRay = currentRay;
-		
-		if (mode == Mode.DEV && Mouse.isButtonDown(1)){
-			
-			for(MultiModeledEntity entity : map.getEntities()){
-				if(inSphere(entity.getPosition(), 6)){
-					map.setSelectedEntity(entity.getTag(),entity.getID());
-				}
-			}
-		}
 	}
 
-	private Vector3f calculateMouseRay(Mode mode) {
+	private Vector3f calculateMouseRay() {
 		
-		float mouseX = 0; float mouseY = 0;
-		
-		if(mode == Mode.PLAYER){
-			mouseX = Display.getWidth()/2;
-			mouseY = Display.getHeight()/2;
-			
-			mouseX += gunOffset;
-		}else {
-			mouseX = Mouse.getX();
-			mouseY = Mouse.getY();
-		}
-		
+		float mouseX = Display.getWidth()/2 + gunOffset;
+		float mouseY = Display.getHeight()/2;
 		
 		Vector2f normalizedCoords = getNormalisedDeviceCoordinates(mouseX, mouseY);
 		Vector4f clipCoords = new Vector4f(normalizedCoords.x, normalizedCoords.y, -1.0f, 1.0f);
@@ -110,6 +84,8 @@ public final class MousePicker {
 		return a*a;
 	}
 	
+	
+	@SuppressWarnings("unused")
 	private boolean inSphere(Vector3f center, float radius){
 		
 		Vector3f orginDifference = new Vector3f(camera.getPosition().x - center.x, camera.getPosition().y - center.y,
@@ -122,7 +98,8 @@ public final class MousePicker {
 		
 		return d >= 0;
 	}
-public boolean inEllipse(Vector3f center, float c, float g, float k, ParticleEmitter emitter){
+	
+	public boolean inEllipse(Vector3f center, float c, float g, float k, ParticleEmitter emitter){
 		
 		/**
 		 

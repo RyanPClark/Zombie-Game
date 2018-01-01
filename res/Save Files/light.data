@@ -1,0 +1,33 @@
+lightPosX: 100.0
+lightPosY: 200.0
+lightPosZ: 100.0
+lightColorRed: 1.0
+lightColorGreen: 1.0
+lightColorBlue: 1.0
+lightAttenuationX: 1.0
+lightAttenuationY: 0.0
+lightAttenuationZ: 0.0
+lightIntensity: 0.5
+light
+lightPosX: -20.0
+lightPosY: 18.0
+lightPosZ: -46.0
+lightColorRed: 1.0
+lightColorGreen: 1.0
+lightColorBlue: 0.4
+lightAttenuationX: 0.5
+lightAttenuationY: 0.025
+lightAttenuationZ: 0.001
+lightIntensity: 3.0
+light
+lightPosX: -7.2095003
+lightPosY: 18.926079
+lightPosZ: 38.313793
+lightColorRed: 1.0
+lightColorGreen: 1.0
+lightColorBlue: 0.4
+lightAttenuationX: 1.0
+lightAttenuationY: 0.025
+lightAttenuationZ: 0.001
+lightIntensity: 3.0
+light

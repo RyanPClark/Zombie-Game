@@ -1,0 +1,53 @@
+#version 400 core
+
+in vec2 pass_textureCoords;
+in vec3 surfaceNormal;
+in vec3 toLightVector[3];
+in vec3 toCameraVector;
+
+out vec4 out_Color;
+
+uniform sampler2D backgroundSampler;
+uniform sampler2D rSampler;
+uniform sampler2D gSampler;
+uniform sampler2D bSampler;
+uniform sampler2D blendMapSampler;
+
+uniform vec3 lightColor[3];
+uniform vec3 attenuation[3];
+uniform float intensity[3];
+
+void main(void){
+
+	vec3 totalDiffuse = vec3(0.0);
+
+	vec4 blendMapColor = texture(blendMapSampler, pass_textureCoords);
+	
+	float backTextureAmount = 1 - (blendMapColor.r + blendMapColor.g + blendMapColor.b);
+	vec2 tiledCoords =  pass_textureCoords * 40.0;
+	vec4 backgroundTextureColor = texture(backgroundSampler, tiledCoords) * backTextureAmount;
+	vec4 rTextColor = texture(rSampler, tiledCoords) * blendMapColor.r;
+	vec4 gTextColor = texture(gSampler, tiledCoords) * blendMapColor.g;
+	vec4 bTextColor = texture(bSampler, tiledCoords) * blendMapColor.b;
+	
+	vec4 totalColor = backgroundTextureColor + rTextColor + gTextColor + bTextColor;
+
+	vec3 unitNormal = normalize(surfaceNormal);
+	vec3 unitVectorToCamera = normalize(toCameraVector);
+	
+	for(int i = 0; i < 3; i++){
+	
+		float distance = length(toLightVector[i]);
+		float attFactor = attenuation[i].x + (attenuation[i].y*distance) + (attenuation[i].z * distance*distance);
+		vec3 unitLightVector = normalize(toLightVector[i]);
+		vec3 lightDirection = -unitLightVector;
+		vec3 reflectedLightDirection = reflect(lightDirection, unitNormal);
+		float nDotl = dot(unitNormal,unitLightVector);
+		float brightness = max(nDotl, 0.0);
+		totalDiffuse = totalDiffuse + (intensity[i] * brightness * lightColor[i])/attFactor;
+	}
+	
+	totalDiffuse = max(totalDiffuse, 0.3);
+	
+	out_Color = vec4(totalDiffuse,1.0) * totalColor;
+}

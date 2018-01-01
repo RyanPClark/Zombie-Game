@@ -1,0 +1,53 @@
+Unique textures are worse than unique meshes
+
+There are three main things one ought to take into account to achieve constant good performance:
+ Vertex density, texture density and visibility spectrum. A good balance between these three will result
+ in a good scene complexity which will keep the frame rate low and performance well. (Provost, 2003b) 
+
+Assets that are high in vertex density should be distributed evenly across
+ the playing space and place them in scenes and environments where the visibility spectrum is small. Distributing
+ these assets evenly and strategically might save more time than optimizing each asset. (Provost, 2003b) 
+
+Concentrating lot of different textures into a constrained location can cause a breakdown in the frame rate
+
+The smaller the visibility spectrum is, the more detail can be put into the scene. (Provost, 2003b) 
+
+When a scene is rendered, two fundamental things happen. The vertices get transformed and its triangles get
+ drawn. These two things happen parallel so whichever is the slower one determines how fast the asset is rendered.
+
+ that when creating LODs of models for games it is important to keep certain things such as vertex positions,
+ normals and UVs consistent between the different LOD models for the same mesh, in order to keep the memory low.
+
+It is a good idea to decide upon a memory budget in the beginning of a project which decides what to use the memory on
+ 
+As a 3D artist for games you can help improving the performance by removing unnecessary geometry from the models
+ and by using normal maps instead of modelled geometry as well as combining objects when possible. Avoiding
+ unnecessary parts and triangles on a mesh, is an easy and fast method for improving game performance and is
+ something graphical artists needs to keep in mind when working on a 3D model for a level. 
+
+Transcendental mathematical functions (pow, exp, log, cos, sin, tan, etc) are quite expensive, so a good rule is to
+have no more than one such operation per pixel. Consider using lookup textures as an alternative where applicable.
+
+You should always specify the precision of floating point variables when writing custom shaders. It is critical
+ to pick the smallest possible floating point format in order to get the best performance. (short vs int vs long)
+
+•Keep vertex count below 200K..3M per frame when targetting PCs, depending on the target GPU
+•If you’re using built-in shaders, pick ones from Mobile or Unlit category. They work on non-mobile platforms as well; but are simplified and approximated versions of the more complex shaders.
+•Keep the number of different materials per scene low - share as many materials between different objects as possible.
+•Set Static property on a non-moving objects to allow internal optimizations like static batching.
+•Do not use Pixel Lights when it is not necessary - choose to have only a single (preferably directional) pixel light affecting your geometry.
+•Do not use dynamic lights when it is not necessary - choose to bake lighting instead.
+•Use compressed texture formats when possible, otherwise prefer 16bit textures over 32bit.
+•Do not use fog when it is not necessary.
+•Learn benefits of Occlusion Culling and use it to reduce amount of visible geometry and draw-calls in case of complex static scenes with lots of occlusion. Plan your levels to benefit from ccclusion culling.
+•Use skyboxes to “fake” distant geometry.
+•Use pixel shaders or texture combiners to mix several textures instead of a multi-pass approach.
+•If writing custom shaders, always use smallest possible floating point format: • fixed / lowp - for colors, lighting information and normals,
+• half / mediump - for texture UV coordinates,
+• float / highp - avoid in pixel shaders, fine to use in vertex shader for position calculations.
+
+•Minimize use of complex mathematical operations such as pow, sin, cos etc. in pixel shaders.
+•Choose to use less textures per fragment.
+
+
+

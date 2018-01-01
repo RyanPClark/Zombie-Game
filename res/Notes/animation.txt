@@ -1,0 +1,86 @@
+Firstly, you’ll have noticed that I haven’t skinned my
+character yet, so my animation system is only the bare bones of skeletal
+animation.
+The first thing you’ll need to do is to create some data
+objects for animations. This is how you will represent animations in your code.
+For each animation I create an instance of my “Animation” object. The
+“Animation” object holds things like the animation’s ID, length in frames, and
+name, but more importantly it holds a list of “Animation Sections”. These
+“Animation Sections” hold the animation data for each separate part of the
+character’s body, i.e. if there are 16 parts of the character’s body, then
+there will be 16 “Animation Sections”, one for each part.
+So, one “Animation Section” instance holds all the animation
+data for one part of the character’s body. The “Animation Section” object holds
+an ID of the body part that it controls, as well as all the animation data for
+that body part. This animation data comes in the form of a list of “Key
+Frames”.
+Each “Key Frame” holds a float value of time “t” and a
+rotation “r”. The “Key Frame” shows that the body part that it represents
+should have a rotation of “r” at time “t” of the animation. You will have to
+decide on how you are going to represent the rotation, but I would strongly
+suggest you use quaternions: @3.
+(You don’t really need to know all the maths behind quaternions, just know that
+you represent them using 4 floats and that you can convert them to rotation
+matrices fairly simply) For example, imagine an “Animation Section” that
+represents the right foot section of the character for a certain animation.
+Let’s say that this section has 3 “Key Frames” which are as follows:
+(For simplicity I don’t show the rotations as quaternions
+here, to make it easier to understand)
+
+Key Frame[0]: time = 0, rotation = 0 degrees (this would be
+represented as a quaternion).
+
+Key Frame[1]: time = 20, rotation = 90 degrees around x axis
+(represented as quaternion in program)
+
+Key Frame[2]: time = 50, rotation = 0 degrees
+So for this animation, the right foot starts at its normal
+position, then moves slowly around the x axis until at time 20 it has turned 90
+degrees around the x axis. It then turns back towards its original position,
+which it reaches at time 50. It is assumed always that the section will move
+linearly between two key frames.
+The storing of the animations would be done once when the
+game is loaded. Now I will explain how to use the stored animation data to
+animate your character:
+Now that you’ve stored the key frames for an animation for
+every section of the character’s body, you need a way to find out what position
+each section of the body should be at for a given time. Say that at a certain
+frame you want to render the character at time 20 of a certain animation. For
+this you will need to find the rotation of each part of the character at time
+20 of the animation. To do this you will need to use interpolation. For
+example, if the rotation is 90 degrees at time 0, and 70 degrees at time 10,
+you can use interpolation to find the rotation at any time between 0 and 10.
+Interpolation of rotations is not fun! This is why I suggest
+you use quaternions, because they are the easiest to accurately interpolate
+between. For this you will need to use a method called SLERP. This method is
+full of very tricky maths which I don’t understand, but you can find the code
+online fairly easily for SLERP so you don’t have to understand it (I can send
+you the code for it if you can’t find it online). Using this method you can
+then calculate the rotation of every part of the character’s body for any given
+time of the animation.
+Now that you know the rotation of every part of the body,
+you now need to render the character. For this, your character needs to be
+organised into a structure of nodes, where each node represents one section of
+the character’s body. Each node can have one parent and any number of children.
+For example, the upper right arm has one child, the lower right arm. The parent
+of the upper right arm is the upper body (In my game I have no shoulder bones).
+The upper body is the parent of the upper right arm because if the upper body
+rotates the upper right arm will go with it. However, the upper right arm can
+twist independently of the upper body.
+The body should have one main node; the node of the body
+that has no parent. In my game I have made this the waist of the player. If the
+waist moves, everything connected to it moves with it. When you render the
+character you must transverse this structure of nodes using a “depth first
+search”, starting at the main node. You will also need a “stack” to store model
+matrix transformations in. (I assume knowledge of stacks, depth first searches
+and model matrices here, if you haven’t come across any of these then I suggest
+reading up on them, they’re all fairly simple concepts). As you traverse down
+the nodes you first store the current model matrix by pushing a duplicate of it
+onto the stack. You then rotate the current model matrix using the previously
+calculated rotation for that node and then render the node. When traversing
+back up nodes you must pop the top matrix off the stack and set that as the
+current model matrix.
+Information about rotating model matrices using quaternions
+can be found here: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
+(Convert the quaternion to a rotation matrix, and then
+multiply the model matrix by the rotation matrix).

@@ -12,9 +12,7 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
-import components.Frustum;
 import components.Statics;
-import enums.Mode;
 import entities.Camera;
 import entities.Entity;
 import entities.Light;
@@ -93,7 +91,7 @@ public class MasterRenderer {
 		waterRenderer.makeNewProjectionMatrix(projectionMatrix);
 	}
 	
-	public void render(List<Light> light, Camera cam, boolean wireframe, Mode mode){
+	public void render(List<Light> light, Camera cam, boolean wireframe){
 		
 		if (waters.size() > 0){
 			fbos.bindReflectionFrameBuffer();
@@ -101,17 +99,17 @@ public class MasterRenderer {
 			float distance = 2*(cam.getPosition().y - Statics.SEA_LEVEL);
 			cam.getPosition().y -= distance;
 			cam.invertPitch();
-			renderScene(light, cam, wireframe, new Vector4f(0, 1, 0, -Statics.SEA_LEVEL), true, mode);
+			renderScene(light, cam, wireframe, new Vector4f(0, 1, 0, -Statics.SEA_LEVEL), true);
 			cam.getPosition().y += distance;
 			cam.invertPitch();
 			
 			fbos.bindRefractionFrameBuffer();
-			renderScene(light, cam, wireframe, new Vector4f(0, -1, 0, Statics.SEA_LEVEL), false, mode);
+			renderScene(light, cam, wireframe, new Vector4f(0, -1, 0, Statics.SEA_LEVEL), false);
 			fbos.unbindCurrentFrameBuffer();
 		}
 		
 		
-		renderScene(light, cam, wireframe, new Vector4f(0, -1, 0, Statics.NORMAL_RENDER_CLIP), true, mode);
+		renderScene(light, cam, wireframe, new Vector4f(0, -1, 0, Statics.NORMAL_RENDER_CLIP), true);
 		
 		if (waters.size() > 0){
 			waterRenderer.render(waters, cam);
@@ -123,12 +121,12 @@ public class MasterRenderer {
 		bloods.clear();
 	}
 	
-	public void renderScene(List<Light> light, Camera cam, boolean wireframe, Vector4f clipPlane, boolean skybox, Mode mode){
+	public void renderScene(List<Light> light, Camera cam, boolean wireframe, Vector4f clipPlane, boolean skybox){
 		prepare();
 		
-		Vector4f rightPlane = Frustum.getRightPlane();
-		Vector4f leftPlane = Frustum.getLeftPlane();
-		Vector3f center = Frustum.getCenter();
+		Vector4f rightPlane = cam.getRightPlane();
+		Vector4f leftPlane = cam.getLeftPlane();
+		Vector3f center = cam.getCenter();
 		
 		if(skybox){
 			skyboxRenderer.render(cam);
@@ -155,7 +153,7 @@ public class MasterRenderer {
 		shader.loadLight(light);
 		shader.loadViewMatrix(cam);
 		
-		renderer.render(entities, wireframe, mode);
+		renderer.render(entities, wireframe);
 		shader.stop();
 	}
 	
@@ -167,7 +165,7 @@ public class MasterRenderer {
 		shader.loadViewMatrix(cam);
 		shader.loadLight(lights);
 		
-		renderer.render(entities, false, Mode.PLAYER);
+		renderer.render(entities, false);
 		shader.stop();
 		
 		particleShader.start();

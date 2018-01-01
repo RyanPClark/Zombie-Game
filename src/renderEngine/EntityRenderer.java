@@ -15,7 +15,6 @@ import org.lwjgl.util.vector.Matrix4f;
 import shaders.StaticShader;
 import textures.ModelTexture;
 import toolbox.GameMath;
-import enums.Mode;
 import entities.Entity;
 
 public class EntityRenderer {
@@ -29,14 +28,14 @@ public class EntityRenderer {
 		shader.stop();
 	}
 	
-	protected void render(Map<TexturedModel, List<Entity>> entities, boolean wireframe, Mode mode){
+	protected void render(Map<TexturedModel, List<Entity>> entities, boolean wireframe){
 		
 		for(TexturedModel model:entities.keySet()){
 			prepareTexturedModel(model);
 			List<Entity> batch = entities.get(model);
 			for(Entity entity:batch){
 				
-				prepareInstance(entity, mode, model.getPartID());
+				prepareInstance(entity, model.getPartID());
 				
 				int renderType = GL11.GL_TRIANGLES;
 				
@@ -90,11 +89,11 @@ public class EntityRenderer {
 		
 	}
 	
-	private void prepareInstance(Entity entity, Mode mode, int i){
+	private void prepareInstance(Entity entity, int i){
 		
 		Matrix4f transformationMatrix = entity.getMatrix();
 		
-		if (!entity.isStatic() || mode == Mode.DEV){
+		if (!entity.isStatic()){
 			
 			transformationMatrix = GameMath.createTransformationMatrix(entity.getPosition(),
 					entity.getRotX(), entity.getRotY(), entity.getRotZ(), entity.getScale());

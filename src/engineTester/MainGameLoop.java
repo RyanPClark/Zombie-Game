@@ -7,10 +7,9 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
-import components.Frustum;
 import entities.Camera;
 import entities.Gun;
-import enums.Mode;
+import entities.Player;
 import enums.State;
 import guis.GuiMaster;
 import renderEngine.DisplayManager;
@@ -22,16 +21,16 @@ import toolbox.MousePicker;
 
 public final class MainGameLoop {
 	
+	private static Player player;
 	private static Camera camera;
 	private static MasterRenderer masterRenderer;
 	private static Loader loader;
 	private static Gun gun;
-	private static Mode mode = Mode.PLAYER;
 	private static State state = State.CHOOSING;
 	private static int weaponID = (int)(System.currentTimeMillis()%24);
 	private static Map map; 
-	private static boolean wireframe, flying;
-	private static float fps;
+	private static boolean wireframe;
+	private static float tick;
 	private static MousePicker picker;
 		
 	public static void main(String[] args) {
@@ -39,10 +38,10 @@ public final class MainGameLoop {
 		init();
 		
 		while(!Display.isCloseRequested()){
-			
+
+			displayFPS();
 			checkGuiInteractions();
 			render();
-			fps = 1000/DisplayManager.getDelta();
 			
 			if(state == State.CHOOSING)
 				startLogic();
@@ -55,6 +54,8 @@ public final class MainGameLoop {
 	}
 	
 	private static void displayFPS(){
+		tick = DisplayManager.getDelta()/1000;
+		float fps = 1/tick;
 		if (System.currentTimeMillis() % 10 == 0)
 			DisplayManager.setTitle((int)fps + "");
 	}
@@ -68,18 +69,20 @@ public final class MainGameLoop {
 		masterRenderer = new MasterRenderer(loader);
 		Sound.init();
 		camera = new Camera();
-		Frustum.update(camera.getPosition(), camera.getYaw());
+		camera.updateFrustum();
+		picker = new MousePicker(camera, masterRenderer.getProjectionMatrix());
 		Initialize.init(loader);
 		GuiMaster.loadRest(loader);
-		picker = new MousePicker(camera, masterRenderer.getProjectionMatrix(), map);
 		GunLoader.init();
-		map = new Map(masterRenderer, camera, mode, picker, fps);
+		map = new Map(masterRenderer, camera, player, picker);
+		player = new Player(camera, map.getTerrain(), picker, map.getCollisions(), gun);
+		map.setPlayer(player);
 	}
 	
 	private static void render(){
 		map.render(camera.getPosition());
-		masterRenderer.render(map.getLights(), camera, wireframe, mode);
-		GuiMaster.update(state, gun, camera.getScore());
+		masterRenderer.render(map.getLights(), camera, wireframe);
+		GuiMaster.update(state, gun, player.getScore());
 		if (gun != null)
 			masterRenderer.processMultiModeledEntity(gun, 0);
 		
@@ -92,11 +95,14 @@ public final class MainGameLoop {
 	private static void startLogic(){
 		
 		state = GuiMaster.startState();
+		camera.updateFrustum();
+		
 		int oldWeaponID = weaponID;
 		weaponID = GuiMaster.getWeaponID(weaponID);
-		Frustum.update(camera.getPosition(), camera.getYaw());
+		
 		if(oldWeaponID != weaponID){
 			gun = Initialize.loadGun(weaponID);
+			player.setGun(gun);
 			map.setGun(gun);
 		}
 		
@@ -108,9 +114,10 @@ public final class MainGameLoop {
 		if(state != State.CHOOSING){
 			deltaCursor();
 			map.loadZombies();
-			camera.setScore(0);
+			player.setScore(0);
 			if (gun == null){
 				gun = Initialize.loadGun(weaponID);
+				player.setGun(gun);
 				map.setGun(gun);
 			}
 			
@@ -123,21 +130,20 @@ public final class MainGameLoop {
 	private static void gameLogic(){
 
 		if(Keyboard.isKeyDown(Keyboard.KEY_K))
-			camera.setHealth(0);
+			player.setHealth(0);
 		
 		escapeChecker();
-		map.update(mode);
-		camera.update(map.getTerrain(), gun.mobility, flying, mode, picker.getCurrentRay(), map.getCollisions(), fps);
+		map.update();
+		player.update(tick);
 		gun.update(camera, masterRenderer, false);
 		
-		if(camera.getHealth() <= 0){
+		if(player.getHealth() <= 0){
 			state = State.CHOOSING;
-			camera.setHealth(64);
+			player.setHealth(64);
 			Sound.playSound(10);
 			Sound.playSound(11);
 			deltaCursor();
 		}
-		displayFPS();
 	}
 	
 	private static void escapeChecker(){

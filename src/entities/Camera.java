@@ -1,163 +1,69 @@
 package entities;
 
-import java.util.List;
-
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
-import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
-import components.CollisionDetection;
-import components.Statics;
-import components.Frustum;
-import enums.Mode;
-import terrains.Terrain;
+import renderEngine.DisplayManager;
 import toolbox.GameMath;
 
 public class Camera {
 	
-	private float terainHeight, speed, upwardsSpeed, pitch, roll, yaw = 180;
+	private static final float TARGET_FPS = DisplayManager.TARGET_FPS;
+	private static final int FRUSTUM_ANGLE = 35;
+	private static final int ROT_CHECK_FRQ = 4;
+	private static final float MAX_PITCH = 50;
+	private static final float MIN_PITCH = -7.5f;
+	private static final float LOOK_SPEED = 0.05f;
+	
+	private Vector4f rightPlane = new Vector4f(0,0,0,-1), leftPlane = new Vector4f(0,0,0,-1);
+	private Vector3f center = new Vector3f(0,0,0);
+	
+	private Vector3f position = new Vector3f(0,0,0);
+	private int upi;
 
-	private boolean isInAir;
+	private float pitch, roll, yaw = 180;
 	
-	private Vector3f position = new Vector3f(0, Statics.CAM_HEIGHT, -100);
-	private int upi, score, health = 64;
-	private Vector3f lastPosition;
-	private Vector2f directionVector;
 	
-	public void move(Terrain terrain, float mobility, Vector3f cameraRay, float fps){
+	public void updateFrustum (){
 		
-		lastPosition = new Vector3f(position.x, position.y, position.z);
-		directionVector = new Vector2f(0, 0);
+		center = GameMath.moveSomethingBehindPlayer(position, yaw, 5);
 		
-		terainHeight = terrain.getHeightOfTerrain(position.x, position.z);
+		rightPlane.x = -(float) Math.cos(Math.toRadians(yaw + FRUSTUM_ANGLE));
+		rightPlane.z = -(float) Math.sin(Math.toRadians(yaw + FRUSTUM_ANGLE));
 		
-		speed = Statics.RUN_SPEED * mobility * (60f /fps);
-		if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)){
-			speed *= Statics.sprintModifier;
-		}else if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)){
-			speed /= (2*Statics.sprintModifier);
-		}
-		
-		if (Mouse.isButtonDown(1)){
-			speed *= Statics.scopeSlowdown;
-		}
-		
-		if (Keyboard.isKeyDown(Keyboard.KEY_W)){
-			directionVector.x += cameraRay.x;
-			directionVector.y += cameraRay.z;
-		}if (Keyboard.isKeyDown(Keyboard.KEY_S)){
-			directionVector.x -= cameraRay.x;
-			directionVector.y -= cameraRay.z;
-		}if (Keyboard.isKeyDown(Keyboard.KEY_D)){
-			directionVector.x -= cameraRay.z;
-			directionVector.y += cameraRay.x;
-		}if (Keyboard.isKeyDown(Keyboard.KEY_A)){
-			directionVector.x += cameraRay.z;
-			directionVector.y -= cameraRay.x;
-		}
-		
-		position.x += speed * directionVector.x;
-		position.z += speed * directionVector.y;
+		leftPlane.x = (float) Math.cos(Math.toRadians(yaw - FRUSTUM_ANGLE));
+		leftPlane.z = (float) Math.sin(Math.toRadians(yaw - FRUSTUM_ANGLE));
 	}
 	
-	private void jump(boolean flying, float fps) {
-		
-		if (!flying){
-			if (position.y <= terainHeight + Statics.CAM_HEIGHT) {
-			      upwardsSpeed = 0;
-			      isInAir = false;
-			      position.y = terainHeight + Statics.CAM_HEIGHT;
-			}
-			if(Keyboard.isKeyDown(Keyboard.KEY_SPACE)){
-				if (!isInAir) {
-				      upwardsSpeed = Statics.JUMP_POWER;
-				      isInAir = true;
-				}
-			}
-			
-			upwardsSpeed += Statics.GRAVITY * (60/fps);
-			position.y += upwardsSpeed * (60/fps);
-		}
-		else {
-			if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)){
-				position.y -= Statics.flySpeed*upwardsSpeed;
-			}else if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)){
-				position.y += Statics.flySpeed*upwardsSpeed;
-			}
-		}
-	}
-	
-	public void rotate(Mode mode, float fps){
-		
+	private void rotate(float tick){
+
+		upi++;
+
 		int centerX = Display.getWidth()/2;
 		int centerY = Display.getHeight()/2;
-		
-		if(mode == Mode.PLAYER){
-			upi++;
-			if(upi%Statics.rotationCheckFrequency == 0){
-				Mouse.setCursorPosition(centerX, centerY);
-			}else {
-				yaw += (60/fps)*((float)Mouse.getX() -centerX)/Statics.lookSpeed;
-				pitch -= (60/fps)*((float)Mouse.getY() - centerY)/Statics.lookSpeed;
-			}
-		}else {
 			
-			if (Keyboard.isKeyDown(Keyboard.KEY_UP)){
-				pitch += Statics.devLookUpSpeed;
-			}else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)){
-				pitch -= Statics.devLookUpSpeed;
-			}else if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)){
-				yaw -= Statics.devLookSideSpeed;
-			}else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)){
-				yaw += Statics.devLookSideSpeed;
-			}
+		if (upi % ROT_CHECK_FRQ == 0)
+		{
+			Mouse.setCursorPosition(centerX, centerY);
+		}
+		else {
+			yaw += LOOK_SPEED * TARGET_FPS * tick * ((float)Mouse.getX() -centerX);
+			pitch -= LOOK_SPEED * TARGET_FPS * tick * ((float)Mouse.getY() - centerY);
 		}
 		
+		yaw = yaw < 0 ? yaw + 360 : yaw;
 		yaw %= 360;
 		
-		if (pitch > Statics.maxPitch){
-			pitch = Statics.maxPitch;
-		}
-		else if (pitch < Statics.minPitch){
-			pitch = Statics.minPitch;
-		}
+		pitch = pitch > MAX_PITCH ? MAX_PITCH : pitch;
+		pitch = pitch < MIN_PITCH ? MIN_PITCH : pitch;
 	}
 	
-	public void update(Terrain terrain, float mobility, boolean flying, Mode mode,
-			Vector3f cameraRay, List<List<Vector2f>> collisions, float fps){
+	public void update(float tick){
 		
-		move(terrain, mobility, cameraRay, fps);
-		jump(flying, fps);
-		rotate(mode, fps);
-		setPosition(position);
-		Frustum.update(position, yaw);
-		
-		if(mode == Mode.PLAYER){
-			Vector2f currentCollision = CollisionDetection.detectCollisions(collisions, position);
-			if (currentCollision.x == 1){
-				reactToCollisions(collisions.get((int) currentCollision.y));
-			}
-		}
-	}
-	
-	private void reactToCollisions(List<Vector2f> collisions){
-		
-		directionVector = CollisionDetection.collisionDirection(new Vector2f(lastPosition.x, lastPosition.z),
-				new Vector2f(position.x, position.z), collisions);
-		
-		if (directionVector.length() != 0){
-			
-			directionVector.normalise();
-			
-			float dotProd = GameMath.dotProd(directionVector, new Vector2f(position.x - lastPosition.x, position.z - lastPosition.z));
-			
-			lastPosition.x += dotProd * speed * directionVector.x;
-			lastPosition.z += dotProd * speed * directionVector.y;
-		}
-		
-		setPosition(new Vector3f(lastPosition.x, position.y, lastPosition.z));
+		rotate(tick);
+		updateFrustum();
 	}
 	
 	public void increaseRotation(float dx, float dy, float dz){
@@ -166,41 +72,39 @@ public class Camera {
 		roll += dz;
 	}
 	
-	public void increasePosition(float dx, float dy, float dz){
-		position.x += dx;
-		position.y += dy;
-		position.z += dz;
+	public Vector4f getRightPlane() {
+		return rightPlane;
+	}
+
+	public Vector4f getLeftPlane() {
+		return leftPlane;
+	}
+
+	public Vector3f getCenter() {
+		return center;
 	}
 	
-	private void setPosition(Vector3f position) {
-		this.position = position;
-	}
-	
-	public int getHealth() {
-		return health;
-	}
-	public void setHealth(int health) {
-		this.health = health;
-	}
-	public int getScore() {
-		return score;
-	}
-	public void setScore(int score) {
-		this.score = score;
-	}
 	public void invertPitch(){
 		this.pitch = -pitch;
 	}
+	
 	public Vector3f getPosition() {
 		return position;
 	}
+	
 	public float getPitch() {
 		return pitch;
 	}
+	
 	public float getYaw() {
 		return yaw;
 	}
+	
 	public float getRoll() {
 		return roll;
+	}
+
+	public void setPosition(Vector3f position) {
+		this.position = position;
 	}
 }

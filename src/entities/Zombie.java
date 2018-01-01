@@ -4,19 +4,21 @@ import java.util.List;
 import java.util.Random;
 
 import models.TexturedModel;
+import renderEngine.DisplayManager;
 
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
 import sound.Sound;
 import terrains.Terrain;
+import toolbox.GameMath;
 import toolbox.MousePicker;
-import components.AttackPlayer;
 import components.CollisionDetection;
 import components.Statics;
 
 public class Zombie extends MultiModeledEntity{
 	
+	private static final float TARGET_FPS = DisplayManager.TARGET_FPS;
 	private Vector3f position, scale, lastPosition;
 	private float rotation, rotX, speed, health, maxSpeed, maxHealth;
 	private int deathCounter, bleedingCounter, attackCounter, bModelDistance;
@@ -38,15 +40,14 @@ public class Zombie extends MultiModeledEntity{
 		return false;
 	}
 	
-	public void updateZombie(Terrain terrain, Gun gun, MousePicker p, ParticleEmitter e, Camera cam, float fps){
+	public void updateZombie(Terrain terrain, Gun gun, MousePicker p, ParticleEmitter e, Player player){
 		
 		lastPosition = new Vector3f(position.x, position.y, position.z);
 		
-		speed = maxSpeed;
-		speed  *= (60/fps);
+		speed = maxSpeed * TARGET_FPS * DisplayManager.getTick();
 		
-		float px = cam.getPosition().x;
-		float pz = cam.getPosition().z;
+		float px = player.getPosition().x;
+		float pz = player.getPosition().z;
 		
 		if(isBleeding){
 			bleedingCounter++;
@@ -56,54 +57,51 @@ public class Zombie extends MultiModeledEntity{
 			}
 		}
 		
-		if (health > 0){
-			
-			checkIfKilledPlayer(px,pz);
-			
-			if(inFrustum){
-				
-				if(gun.shooting){
-					if(p.inEllipse(new Vector3f(position.x, position.y+(gun.offsets[2]+Statics.bodyCenterOffset), position.z),
-							Statics.xRadius*scale.x, Statics.yRadius*scale.y, Statics.xRadius*scale.z, e)){
-						health -= gun.power;
-						isBleeding = true;
-					}
-				}
-				
-				position.y = terrain.getHeightOfTerrain(position.x, position.z);
-			}
-			
-			if (!isRising){
-				
-				if(!(px > position.x - Statics.playerHitDistance && px < position.x + Statics.playerHitDistance
-						&& pz < position.z + Statics.playerHitDistance && pz > position.z - Statics.playerHitDistance)){
-					
-					rotation = AttackPlayer.lookAtPlayer(px, pz, position, rotation);
-					position = AttackPlayer.attack(position, speed, rotation);
-					
-					Vector2f currentCollision = CollisionDetection.detectCollisions(collisions, position);
-					if (currentCollision.x == 1){
-						reactToCollision((int) currentCollision.y);
-					}
-					
-				}else {
-					cam.setHealth(cam.getHealth()-1);
-				}
-			}
-			
-			else {
-				deathCounter ++;
-				position.y += Statics.spawnHeight;
-				position.y += deathCounter/Statics.risingSpeed;
-				
-				if (deathCounter >= Statics.deathCounterTime){
-					isRising = false;
-				}
-			}	
+		if(health <= 0) {
+			die(player);
+			return;
 		}
 		
-		else if(health <= 0){
-			die(cam);
+		checkIfKilledPlayer(px,pz);
+			
+		if(inFrustum){
+				
+			if(gun.shooting){
+				if(p.inEllipse(new Vector3f(position.x, position.y+(gun.offsets[2]+Statics.bodyCenterOffset), position.z),
+						Statics.xRadius*scale.x, Statics.yRadius*scale.y, Statics.xRadius*scale.z, e)){
+					health -= gun.power;
+					isBleeding = true;
+				}
+			}
+				
+			position.y = terrain.getHeightOfTerrain(position.x, position.z);
+		}
+			
+		if (!isRising){
+				
+			if(!(px > position.x - Statics.playerHitDistance && px < position.x + Statics.playerHitDistance
+					&& pz < position.z + Statics.playerHitDistance && pz > position.z - Statics.playerHitDistance)){
+					
+				rotation = GameMath.lookAtPlayer(px, pz, position, rotation);
+				position = GameMath.attack(position, speed, rotation);
+					
+				Vector2f currentCollision = CollisionDetection.detectCollisions(collisions, position);
+				if (currentCollision.x == 1){
+					reactToCollision((int) currentCollision.y);
+				}
+					
+			}else {
+				player.setHealth(player.getHealth()-1);
+			}
+		}	
+		else {
+			deathCounter ++;
+			position.y += Statics.spawnHeight;
+			position.y += deathCounter/Statics.risingSpeed;
+			
+			if (deathCounter >= Statics.deathCounterTime){
+				isRising = false;
+			}
 		}
 		
 		setRotY(rotation);
@@ -150,11 +148,11 @@ public class Zombie extends MultiModeledEntity{
 		scale.z = scale.x;
 	}
 	
-	private void respawnShark(Camera cam){	
-		respawnSharkCode(cam.getPosition().x, cam.getPosition().z);
-		cam.setScore(cam.getScore()+1);
+	private void respawnShark(Player player){	
+		respawnSharkCode(player.getPosition().x, player.getPosition().z);
+		player.setScore(player.getScore()+1);
 	}
-	private void die(Camera cam){
+	private void die(Player player){
 		
 		deathCounter ++;
 		rotX += Statics.rotationDeathSpeed;
@@ -162,8 +160,12 @@ public class Zombie extends MultiModeledEntity{
 		if(deathCounter == Statics.deathCounterTime*Statics.rotationDeathSpeed){
 			
 			deathCounter = 0;
-			respawnShark(cam);
+			respawnShark(player);
 		}
+
+		setRotY(rotation);
+		setRotX(rotX);
+		setPosition(position);
 	}
 	
 	private void reactToCollision(int index){

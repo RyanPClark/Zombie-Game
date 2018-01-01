@@ -20,7 +20,8 @@ import toolbox.MyPaths;
 
 public class DisplayManager {
 	
-	private static int ANTI_ALIASING_LEVEL = Statics.ANTI_ALIASING_LEVEL;
+	public static final float TARGET_FPS = 60.0f;
+	private static int ANTI_ALIASING_LEVEL = 1;
 
 	private static long lastFrameTime;
 	private static float delta;
@@ -75,18 +76,24 @@ public class DisplayManager {
 	
 	public static void setTitle(String title){
 		Display.setTitle(title);
-	}public static void resetTitle(){
+	}
+	
+	public static void resetTitle(){
 		Display.setTitle(DISPLAY_TITLE);
 	}
 	private static long getCurrentTime(){
 		return 1000*Sys.getTime()/Sys.getTimerResolution();
 	}
 	
+	public static float getTick() {
+		return delta / 1000.0f;
+	}
+	
 	public static float getDelta(){
 		return delta;
 	}
+	
 	public static void setTitleDelta(){
-		
 		Display.setTitle(""+Math.round(1000f/delta));
 	}
 }
