@@ -1,7 +1,5 @@
 package entities;
 
-import java.util.List;
-
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Vector2f;
@@ -26,35 +24,32 @@ public class Player {
 	private Camera camera;
 	private Terrain terrain;
 	private MousePicker picker;
-	private List<List<Vector2f>> collisions;
 	private Gun gun;
 	
 	private boolean inAir;
 	private int health = 64;
 	private int score;
 	private Vector3f position = new Vector3f(0,0,-100);
-	private Vector3f lastPosition;
+	private Vector3f projectedPosition;
 	private float terainHeight, speed, upwardsSpeed;
 	private Vector2f directionVector = new Vector2f(0,0);
 	
 
-	public Player(Camera camera, Terrain terrain, MousePicker picker, List<List<Vector2f>> collisions, Gun gun) {
+	public Player(Camera camera, Terrain terrain, MousePicker picker, Gun gun) {
 		this.camera = camera;
 		this.terrain = terrain;
 		this.picker = picker;
-		this.collisions = collisions;
 		this.gun = gun;
 	}
 	
 	public void update(float tick){
 		
-		move(terrain, gun.mobility, picker.getCurrentRay(), tick);
+		move(gun.mobility, picker.getCurrentRay(), tick);
+		reactToCollisions();
+		position = new Vector3f(projectedPosition.x, projectedPosition.y, projectedPosition.z);
 		jump(tick);
 		updateCamera(tick);
-		
-		Vector2f currentCollision = CollisionDetection.detectCollisions(collisions, position);
-		if (currentCollision.x == 1)
-			reactToCollisions(collisions.get((int) currentCollision.y));
+		picker.update();
 	}
 	
 	private void updateCamera(float tick) {
@@ -62,30 +57,27 @@ public class Player {
 		camera.setPosition(new Vector3f(position.x, position.y + CAM_HEIGHT, position.z));
 	}
 	
-	private void reactToCollisions(List<Vector2f> collisions){
+	private void reactToCollisions(){
 		
-		directionVector = CollisionDetection.collisionDirection(new Vector2f(lastPosition.x, lastPosition.z),
-				new Vector2f(position.x, position.z), collisions);
+		int index = CollisionDetection.detectCollisions(projectedPosition);
 		
-		if (directionVector.length() != 0){
-			
-			directionVector.normalise();
-			
-			float dotProd = GameMath.dotProd(directionVector, new Vector2f(position.x - lastPosition.x, position.z - lastPosition.z));
-			
-			lastPosition.x += dotProd * speed * directionVector.x;
-			lastPosition.z += dotProd * speed * directionVector.y;
-		}
+		if(index == -1)
+			return;
 		
-		position = new Vector3f(lastPosition.x, position.y, lastPosition.z);
+		directionVector = CollisionDetection.collisionDirection(position.x, position.z, projectedPosition.x, projectedPosition.z, index);
+
+		float dotProd = GameMath.dotProd(directionVector, new Vector2f(projectedPosition.x - position.x, projectedPosition.z - position.z));
+		
+		projectedPosition.x = position.x + speed * directionVector.x * dotProd;
+		projectedPosition.z = position.z + speed * directionVector.y * dotProd;
 	}
 	
-	public void move(Terrain terrain, float mobility, Vector3f cameraRay, float tick){
+	public void move(float mobility, Vector3f cameraRay, float tick){
 		
-		lastPosition = new Vector3f(position.x, position.y, position.z);
+		projectedPosition = new Vector3f(position.x, position.y, position.z);
 		terainHeight = terrain.getHeightOfTerrain(position.x, position.z);
 		
-		speed = RUN_SPEED * mobility * (TARGET_FPS * tick);
+		speed = RUN_SPEED * mobility * TARGET_FPS * tick;
 		speed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) ? speed * SPRINT_MODIFIER : speed;
 		speed = Mouse.isButtonDown(1) ? speed * SCOPE_SLOWDOWN : speed;
 
@@ -109,8 +101,11 @@ public class Player {
 			directionVector.y -= cameraRay.x;
 		}
 		
-		position.x += speed * directionVector.x;
-		position.z += speed * directionVector.y;
+		projectedPosition.x += speed * directionVector.x;
+		projectedPosition.z += speed * directionVector.y;
+		
+		if (directionVector.lengthSquared() > 0)
+			gun.bob();
 	}
 
 	
@@ -132,6 +127,10 @@ public class Player {
 		position.y += upwardsSpeed * TARGET_FPS * tick;
 	}
 
+	public void decreaseHealth() {
+		health--;
+	}
+	
 	public int getHealth() {
 		return health;
 	}
@@ -156,4 +155,7 @@ public class Player {
 		this.gun = gun;
 	}
 	
+	public Gun getGun() {
+		return gun;
+	}
 }

@@ -1,7 +1,5 @@
 package toolbox;
 
-import java.util.Random;
-
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
@@ -9,7 +7,6 @@ import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import entities.Camera;
-import entities.ParticleEmitter;
 
 public final class MousePicker {
 
@@ -99,7 +96,7 @@ public final class MousePicker {
 		return d >= 0;
 	}
 	
-	public boolean inEllipse(Vector3f center, float c, float g, float k, ParticleEmitter emitter){
+	public boolean inEllipse(Vector3f center, float c, float g, float k){
 		
 		/**
 		 
@@ -133,13 +130,6 @@ public final class MousePicker {
 		float PART_2C = 2*c*c*g*g*h*j;
 		
 		ANSWER = PART_1 - PART_2A - PART_2B - PART_2C;
-		
-		
-		
-		if(ANSWER >= 0){
-			Random r = new Random();
-			emitter.setPosition(new Vector3f(center.x + r.nextFloat() - 0.5f, center.y + r.nextFloat() * 2 + 5, center.z + r.nextFloat()-0.5f));
-		}
 		
 		return ANSWER >= 0;
 	}

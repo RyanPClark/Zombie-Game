@@ -5,6 +5,7 @@ import org.lwjgl.util.vector.Vector3f;
 
 public class Particle{
 
+	private static Camera cam;
 	private Vector3f position, scale, color;
 	protected Vector3f velocity;
 	private float rotY, gravity;
@@ -22,14 +23,14 @@ public class Particle{
 		this.lifeTime = 0;
 	}
 	
-	public void update(float yaw){
+	public void update(){
 		
 		velocity.y += gravity;
 		position.y += velocity.y;
 		lifeTime++;
 		position.x += velocity.x;
 		position.z += velocity.z;
-		rotY = -yaw;
+		rotY = -cam.getYaw();
 	}
 	
 	public int getLifeTime(){
@@ -60,5 +61,7 @@ public class Particle{
 		return color;
 	}
 	
-
+	public static void setCamera(Camera cam) {
+		Particle.cam = cam;
+	}
 }

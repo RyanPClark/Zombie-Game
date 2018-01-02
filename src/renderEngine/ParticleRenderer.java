@@ -21,10 +21,10 @@ public class ParticleRenderer {
 	private final RawModel quad;
 	private ParticleShader shader;
 
-	public ParticleRenderer(Loader loader, ParticleShader shader, Matrix4f projectionMatrix){
+	public ParticleRenderer(ParticleShader shader, Matrix4f projectionMatrix){
 		float[] positions = {-1, 1, -1, -1, 1, 1, 1, -1};
 		this.shader = shader;
-		quad = loader.loadToVAO(positions, 2);
+		quad = Loader.loadToVAO(positions, 2);
 		this.shader.start();
 		this.shader.loadProjectionMatrix(projectionMatrix);
 		this.shader.stop();

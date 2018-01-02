@@ -9,14 +9,17 @@ import toolbox.GameMath;
 
 public class CollisionDetection {
 
-	public static Vector2f collisionDirection(Vector2f startPosition, Vector2f endPosition, List<Vector2f> polygonOfIntersection){
+	public static List<List<Vector2f>> collisions;
+	
+	public static Vector2f collisionDirection(float sx, float sy, float ex, float ey, int index){
 
+		List<Vector2f> polygonOfIntersection = collisions.get(index);
 		int size = polygonOfIntersection.size();
 		
 		Vector2f vector = new Vector2f(0,0);
 		
-		Vector2f p = startPosition;
-		Vector2f r = new Vector2f(endPosition.x - startPosition.x, endPosition.y - startPosition.y);
+		Vector2f p = new Vector2f(sx, sy);
+		Vector2f r = new Vector2f(ex - sx, ey - sy);
 		
 		for (int i = 0; i < polygonOfIntersection.size(); i++){
 			
@@ -42,30 +45,24 @@ public class CollisionDetection {
 			}
 		}
 		
+		if(vector.lengthSquared() != 0)
+			vector.normalise();
 		return vector;
-		
 	}
 	
-	public static Vector2f detectCollisions(List<List<Vector2f>> collisions, Vector3f position){
-		
-		Vector2f output = new Vector2f(0,0);
+	public static int detectCollisions(Vector3f position){
 		
 		for (int i = 0; i < collisions.size(); i++){
 			for (int k = 2; k < collisions.get(i).size(); k++){
 					
 				List<Vector2f> currentPolygon = collisions.get(i);
 				
-				boolean barryCentric = GameMath.barryCentric(new Vector2f(position.x, position.z),
-						currentPolygon.get(0), currentPolygon.get(k-1), currentPolygon.get(k), 0);
-					
-				if (barryCentric){
-					output.x = 1;
-					output.y = i;
-					return output;
-				}
+				if( GameMath.barryCentric(new Vector2f(position.x, position.z),
+						currentPolygon.get(0), currentPolygon.get(k-1), currentPolygon.get(k), 0) )
+					return i;
 			}
 		}
 		
-		return output;
+		return -1;
 	}
 }

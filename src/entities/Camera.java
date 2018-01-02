@@ -25,6 +25,10 @@ public class Camera {
 
 	private float pitch, roll, yaw = 180;
 	
+	public Camera() {
+		updateFrustum();
+		Particle.setCamera(this);
+	}
 	
 	public void updateFrustum (){
 		

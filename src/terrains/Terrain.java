@@ -27,14 +27,14 @@ public final class Terrain {
 	private TerrainTexture blendMap;
 	private Matrix4f matrix;
 	
-	public Terrain(float GridX, float GridZ, Loader loader, TerrainTexturePack texturePack, TerrainTexture blendMap,
+	public Terrain(float GridX, float GridZ, TerrainTexturePack texturePack, TerrainTexture blendMap,
 			String heightMap){
 		this.texturePack = texturePack;
 		this.blendMap = blendMap;
 		this.x = GridX * Statics.TERRAIN_SIZE - 0.5f*Statics.TERRAIN_SIZE;
 		this.z = GridZ * Statics.TERRAIN_SIZE + 0.5f*Statics.TERRAIN_SIZE;
 		
-		generateTerrain(loader, heightMap);
+		generateTerrain(heightMap);
 		
 		gridSquareSize = Statics.TERRAIN_SIZE / ((float) heights.length - 1);
 		
@@ -71,7 +71,7 @@ public final class Terrain {
 		return answer;
 	}
 
-	private void generateTerrain(Loader loader, String heightMap){
+	private void generateTerrain(String heightMap){
 		
 		BufferedImage image = null;
 		try {
@@ -127,7 +127,7 @@ public final class Terrain {
 			}
 		}
 				
-		model = loader.loadToVAO(vertices, textureCoords, normals, indices);
+		model = Loader.loadToVAO(vertices, textureCoords, normals, indices);
 	}
 	
 	private float getHeight(int x, int z, BufferedImage image){

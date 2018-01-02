@@ -16,11 +16,10 @@ public class ParticleEmitter {
 	private Vector3f color;
 	private List<MultiParticle> particles;
 	private Vector3f scale;
-	private Random r;
+	private boolean emitting;
+	private Random r = new Random();
 	
-	public ParticleEmitter (Vector3f position,
-			
-			Vector3f velocity, int hz, int life_length, float gravity, Vector3f color, Vector3f scale) {
+	public ParticleEmitter (Vector3f position,	Vector3f velocity, int hz, int life_length, float gravity, Vector3f color, Vector3f scale) {
 		
 		this.position = position; 
 		this.velocity = velocity;
@@ -30,15 +29,12 @@ public class ParticleEmitter {
 		this.color = color;
 		this.scale = scale;
 		
-		r = new Random();
-		
 		particles = new ArrayList<MultiParticle>();
 	}
 	
-	public ParticleEmitter (Vector3f position,
-			
-			String type) {
+	public ParticleEmitter (Vector3f position, String type) {
 		
+		type = type.toUpperCase();
 		if(type.equals("BLOOD")){
 			this.velocity = new Vector3f(16,6,16);
 			this.hz = 12;
@@ -46,21 +42,24 @@ public class ParticleEmitter {
 			this.gravity = -0.01f;
 			this.color = new Vector3f(1,0,0);
 			this.scale = new Vector3f(0.035f, 0.035f, 0.035f);
-		}else if(type.equals("FIRE")){
+		}
+		else if(type.equals("FIRE")){
 			this.velocity = new Vector3f(10,6,10);
 			this.hz = 3;
 			this.lifeLength = 60;
 			this.gravity = 0.001f;
 			this.color = new Vector3f(1,0.6f,0);
 			this.scale = new Vector3f(0.08f, 0.08f, 0.08f);
-		}else if(type.equals("SMOKE")){
+		}
+		else if(type.equals("SMOKE")){
 			this.velocity = new Vector3f(8,12,8);
 			this.hz = 6;
 			this.lifeLength = 120;
 			this.gravity = 0.0f;
 			this.color = new Vector3f(0.5f,0.5f,0.5f);
 			this.scale = new Vector3f(0.08f, 0.08f, 0.08f);
-		}else if(type.equals("BULLET")){
+		}
+		else if(type.equals("BULLET")){
 			this.velocity = new Vector3f(0,0,0);
 			this.hz = 1;
 			this.lifeLength = 120;
@@ -69,22 +68,20 @@ public class ParticleEmitter {
 			this.scale = new Vector3f(0.8f, 0.08f, 0.08f);
 		}
 		
-		this.position = position; 
-		
-		r = new Random();
+		this.position = position;
 		
 		particles = new ArrayList<MultiParticle>();
 	}
 	
-	public void update(float yaw, boolean emitting, MasterRenderer masterRenderer){
+	public void update(){
 		
 		if (emitting){
 			addParticles();
 		}
 		
 		for (MultiParticle particle : particles){
-			particle.update(yaw);
-			masterRenderer.processBloodParticle(particle);
+			particle.update();
+			MasterRenderer.processBloodParticle(particle);
 		}
 		
 		removeParticles();
@@ -93,10 +90,8 @@ public class ParticleEmitter {
 	private void removeParticles(){
 		
 		for(int i = 0; i < particles.size(); i++){
-			
-			if(particles.get(i).getLifeTime() >= lifeLength){
+			if(particles.get(i).getLifeTime() >= lifeLength)
 				particles.remove(i);
-			}
 		}
 	}
 	
@@ -113,7 +108,6 @@ public class ParticleEmitter {
 		}
 		
 		particles.add(new MultiParticle(positions, scales, velocities, lifeLength, gravity, color, hz));
-		
 	}
 
 	public Vector3f getPosition() {
@@ -163,5 +157,12 @@ public class ParticleEmitter {
 	public void setColor(Vector3f color) {
 		this.color = color;
 	}
-	
+
+	public boolean isEmitting() {
+		return emitting;
+	}
+
+	public void setEmitting(boolean emitting) {
+		this.emitting = emitting;
+	}
 }

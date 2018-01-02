@@ -60,6 +60,14 @@ public class DisplayManager {
 		
 	}
 	
+	public static float displayFPS(){
+		float tick = getDelta()/1000;
+		float fps = 1/tick;
+		if (System.currentTimeMillis() % 10 == 0)
+			setTitle((int)fps + "");
+		return tick;
+	}
+	
 	public static void updateDisplay(){
 		
 		Display.sync(Statics.FPS_CAP);

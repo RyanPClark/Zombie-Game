@@ -66,6 +66,8 @@ public class MultiModeledEntity extends Entity{
 		this.number_of_parts = number_of_parts;
 	}
 	
-	
+	public void setScale(float scale) {
+		this.setScale(new Vector3f(scale, scale, scale));
+	}
 	
 }

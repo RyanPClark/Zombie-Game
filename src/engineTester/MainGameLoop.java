@@ -23,12 +23,9 @@ public final class MainGameLoop {
 	
 	private static Player player;
 	private static Camera camera;
-	private static MasterRenderer masterRenderer;
-	private static Loader loader;
 	private static Gun gun;
 	private static State state = State.CHOOSING;
 	private static int weaponID = (int)(System.currentTimeMillis()%24);
-	private static Map map; 
 	private static boolean wireframe;
 	private static float tick;
 	private static MousePicker picker;
@@ -39,7 +36,7 @@ public final class MainGameLoop {
 		
 		while(!Display.isCloseRequested()){
 
-			displayFPS();
+			tick = DisplayManager.displayFPS();
 			checkGuiInteractions();
 			render();
 			
@@ -53,38 +50,28 @@ public final class MainGameLoop {
 		cleanUp();
 	}
 	
-	private static void displayFPS(){
-		tick = DisplayManager.getDelta()/1000;
-		float fps = 1/tick;
-		if (System.currentTimeMillis() % 10 == 0)
-			DisplayManager.setTitle((int)fps + "");
-	}
-	
 	private static void init(){
 		DisplayManager.createDisplay();
-		loader = new Loader();
-		GuiMaster.init(loader);
+		GuiMaster.init();
 		GuiMaster.RenderSplash();
 		DisplayManager.updateDisplay();
-		masterRenderer = new MasterRenderer(loader);
-		Sound.init();
-		camera = new Camera();
-		camera.updateFrustum();
-		picker = new MousePicker(camera, masterRenderer.getProjectionMatrix());
-		Initialize.init(loader);
-		GuiMaster.loadRest(loader);
+		GuiMaster.loadRest();
 		GunLoader.init();
-		map = new Map(masterRenderer, camera, player, picker);
-		player = new Player(camera, map.getTerrain(), picker, map.getCollisions(), gun);
-		map.setPlayer(player);
+		Sound.init();
+		MasterRenderer.init();
+		camera = new Camera();
+		picker = new MousePicker(camera, MasterRenderer.getProjectionMatrix());
+		Map.init(camera, player, picker);
+		player = new Player(camera, Map.getTerrain(), picker, gun);
+		Map.setPlayer(player);
 	}
 	
 	private static void render(){
-		map.render(camera.getPosition());
-		masterRenderer.render(map.getLights(), camera, wireframe);
+		Map.render(camera.getPosition());
+		MasterRenderer.render(Map.getLights(), camera, wireframe);
 		GuiMaster.update(state, gun, player.getScore());
 		if (gun != null)
-			masterRenderer.processMultiModeledEntity(gun, 0);
+			MasterRenderer.processMultiModeledEntity(gun, 0);
 		
 		if (Display.wasResized())
 			GL11.glViewport(0, 0, Display.getWidth(), Display.getHeight());
@@ -103,26 +90,24 @@ public final class MainGameLoop {
 		if(oldWeaponID != weaponID){
 			gun = Initialize.loadGun(weaponID);
 			player.setGun(gun);
-			map.setGun(gun);
 		}
 		
 		if (gun != null){
-			gun.update(camera, masterRenderer, true);
+			gun.update(camera, picker, true);
 			gun.ammo = gun.maxAmmo;
 		}
 		
 		if(state != State.CHOOSING){
 			deltaCursor();
-			map.loadZombies();
+			Map.loadZombies();
 			player.setScore(0);
 			if (gun == null){
 				gun = Initialize.loadGun(weaponID);
 				player.setGun(gun);
-				map.setGun(gun);
 			}
 			
 			picker.setOffset((int)gun.offsets[3]);
-			masterRenderer.setZoomAmount(0);
+			MasterRenderer.setZoomAmount(0);
 		}
 		camera.increaseRotation(-0.1f, 0, 0);
 	}
@@ -133,9 +118,9 @@ public final class MainGameLoop {
 			player.setHealth(0);
 		
 		escapeChecker();
-		map.update();
+		Map.update();
 		player.update(tick);
-		gun.update(camera, masterRenderer, false);
+		gun.update(camera, picker, false);
 		
 		if(player.getHealth() <= 0){
 			state = State.CHOOSING;
@@ -166,8 +151,8 @@ public final class MainGameLoop {
 	private static void cleanUp(){
 		
 		GuiMaster.cleanUp();
-		masterRenderer.cleanUp();
-		loader.cleanUP();
+		MasterRenderer.cleanUp();
+		Loader.cleanUP();
 		DisplayManager.closeDisplay();
 		Sound.cleanUp();
 		System.exit(0);

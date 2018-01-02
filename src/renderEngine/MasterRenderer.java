@@ -32,43 +32,43 @@ import water.WaterTile;
 
 public class MasterRenderer {
 	
-	private float zoomAmount = 0;
+	private static float zoomAmount = 0;
 	
-	private Matrix4f projectionMatrix;
+	private static Matrix4f projectionMatrix;
 
-	private StaticShader shader = new StaticShader();
-	private TerrainShader terrainShader = new TerrainShader();
-	private ParticleShader particleShader = new ParticleShader();
-	private WaterShader waterShader = new WaterShader();
+	private static StaticShader shader = new StaticShader();
+	private static TerrainShader terrainShader = new TerrainShader();
+	private static ParticleShader particleShader = new ParticleShader();
+	private static WaterShader waterShader = new WaterShader();
 	
-	private EntityRenderer renderer;
-	private TerrainRenderer terrainRenderer;
-	private SkyboxRenderer skyboxRenderer;
-	private ParticleRenderer particleRenderer;
-	private WaterRenderer waterRenderer;
+	private static EntityRenderer renderer;
+	private static TerrainRenderer terrainRenderer;
+	private static SkyboxRenderer skyboxRenderer;
+	private static ParticleRenderer particleRenderer;
+	private static WaterRenderer waterRenderer;
 	
-	private Map<TexturedModel, List<Entity>> entities = new HashMap <TexturedModel, List<Entity>>();
+	private static Map<TexturedModel, List<Entity>> entities = new HashMap <TexturedModel, List<Entity>>();
 	
-	private List<Terrain> terrains = new ArrayList<Terrain>();
-	private List<MultiParticle> bloods = new ArrayList<MultiParticle>();
-	private List<Particle> bullets = new ArrayList<Particle>();
-	private List<WaterTile> waters = new ArrayList<WaterTile>();
+	private static List<Terrain> terrains = new ArrayList<Terrain>();
+	private static List<MultiParticle> bloods = new ArrayList<MultiParticle>();
+	private static List<Particle> bullets = new ArrayList<Particle>();
+	private static List<WaterTile> waters = new ArrayList<WaterTile>();
 	
-	private WaterFrameBuffers fbos;
+	private static WaterFrameBuffers fbos;
 	
-	public MasterRenderer(Loader loader){
+	public static void init() {
 		
 		enableCulling();
 		createProjectionMatrix();
 		fbos = new WaterFrameBuffers();
 		renderer = new EntityRenderer(shader, projectionMatrix);
 		terrainRenderer = new TerrainRenderer(terrainShader,projectionMatrix);
-		skyboxRenderer = new SkyboxRenderer(loader, projectionMatrix);
-		particleRenderer = new ParticleRenderer(loader, particleShader, projectionMatrix);
-		waterRenderer = new WaterRenderer(loader, waterShader, projectionMatrix, fbos);
+		skyboxRenderer = new SkyboxRenderer(projectionMatrix);
+		particleRenderer = new ParticleRenderer(particleShader, projectionMatrix);
+		waterRenderer = new WaterRenderer(waterShader, projectionMatrix, fbos);
 	}
 	
-	public Matrix4f getProjectionMatrix() {
+	public static Matrix4f getProjectionMatrix() {
 		return projectionMatrix;
 	}
 	
@@ -82,7 +82,7 @@ public class MasterRenderer {
 		GL11.glCullFace(GL11.GL_BACK);
 	}
 	
-	public void setZoomAmount(float zoom){
+	public static void setZoomAmount(float zoom){
 		zoomAmount = zoom;
 		createProjectionMatrix();
 		renderer.makeNewProjectionMatrix(projectionMatrix);
@@ -91,7 +91,7 @@ public class MasterRenderer {
 		waterRenderer.makeNewProjectionMatrix(projectionMatrix);
 	}
 	
-	public void render(List<Light> light, Camera cam, boolean wireframe){
+	public static void render(List<Light> light, Camera cam, boolean wireframe){
 		
 		if (waters.size() > 0){
 			fbos.bindReflectionFrameBuffer();
@@ -121,7 +121,7 @@ public class MasterRenderer {
 		bloods.clear();
 	}
 	
-	public void renderScene(List<Light> light, Camera cam, boolean wireframe, Vector4f clipPlane, boolean skybox){
+	public static void renderScene(List<Light> light, Camera cam, boolean wireframe, Vector4f clipPlane, boolean skybox){
 		prepare();
 		
 		Vector4f rightPlane = cam.getRightPlane();
@@ -157,7 +157,7 @@ public class MasterRenderer {
 		shader.stop();
 	}
 	
-	public void renderTestScene(Camera cam, List<Light> lights){
+	public static void renderTestScene(Camera cam, List<Light> lights){
 		
 		prepare();
 		
@@ -177,23 +177,23 @@ public class MasterRenderer {
 		bullets.clear();
 	}
 	
-	public void processTerrain(Terrain terrain){
+	public static void processTerrain(Terrain terrain){
 		terrains.add(terrain);
 	}
 	
-	public void processWater(WaterTile waterTile){
+	public static void processWater(WaterTile waterTile){
 		waters.add(waterTile);
 	}
 	
-	public void processBloodParticle(MultiParticle particle){
+	public static void processBloodParticle(MultiParticle particle){
 		bloods.add(particle);
 	}
 	
-	public void processBullet(Particle bullet){
+	public static void processBullet(Particle bullet){
 		bullets.add(bullet);
 	}
 	
-	public void processMultiModeledEntity(MultiModeledEntity entity, int modelLOD){
+	public static void processMultiModeledEntity(MultiModeledEntity entity, int modelLOD){
 		
 		List<TexturedModel> list = entity.getModels().get(modelLOD);
 		
@@ -211,7 +211,7 @@ public class MasterRenderer {
 		}
 	}
 	
-	public void prepare(){
+	public static void prepare(){
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
 		GL11.glEnable(GL30.GL_CLIP_DISTANCE1);
@@ -220,7 +220,7 @@ public class MasterRenderer {
 		GL11.glClearColor(0, 0, 0, 1);
 	}
 	
-	private void createProjectionMatrix(){
+	private static void createProjectionMatrix(){
 		
 		float aspectRatio = (float) Display.getWidth() / (float) Display.getHeight();
 		float y_scale = (float) (1f/Math.tan(Math.toRadians((Statics.FOV-zoomAmount)/2)))*aspectRatio;
@@ -236,7 +236,7 @@ public class MasterRenderer {
 		projectionMatrix.m33 = 0;
 	}
 	
-	public void cleanUp(){
+	public static void cleanUp(){
 		fbos.cleanUp();
 		shader.cleanUp();
 		terrainShader.cleanUp();

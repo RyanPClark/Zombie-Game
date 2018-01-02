@@ -23,7 +23,7 @@ public class MultiParticle{
 		this.size = size;
 	}
 	
-	public void update(float yaw){
+	public void update(){
 		
 		for(int i = 0; i < size; i++){
 			

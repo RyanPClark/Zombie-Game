@@ -25,57 +25,57 @@ public final class GuiMaster {
 	
 	private static GuiTexture sniperGui, bullet, soundIconGui, splash, gui, gui2, gui3, gui4, gui5, randomGui, highLightTexture;
 	
-	public static void init(Loader loader){
+	public static void init(){
 		
-		guiRenderer = new GUIRenderer(loader);
-		splash = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/splashscreen")), new Vector2f(0f,0f), new Vector2f(1f,1f));
+		guiRenderer = new GUIRenderer();
+		splash = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/splashscreen")), new Vector2f(0f,0f), new Vector2f(1f,1f));
 	}
 	
 	public static void RenderSplash(){
 		guiRenderer.Render(splash);
 	}
 	
-	public static void loadRest(Loader loader){
+	public static void loadRest(){
 		
 		pausedGuis = new ArrayList<GuiTexture>();
-		gui = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/pausescreen")), new Vector2f(0f,0f), new Vector2f(1f,1f));
-		gui3 = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/resumeGame")), new Vector2f(0.0f,0.3f), new Vector2f(0.40f,0.20f));
-		gui4 = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/saveAndQuit")), new Vector2f(0.0f,-0.3f), new Vector2f(0.40f,0.20f));
+		gui = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/pausescreen")), new Vector2f(0f,0f), new Vector2f(1f,1f));
+		gui3 = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/resumeGame")), new Vector2f(0.0f,0.3f), new Vector2f(0.40f,0.20f));
+		gui4 = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/saveAndQuit")), new Vector2f(0.0f,-0.3f), new Vector2f(0.40f,0.20f));
 		
 		pausedGuis.add(gui);
 		pausedGuis.add(gui3);
 		pausedGuis.add(gui4);
 		
-		bullet = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/bulletIcon")), new Vector2f(-0.95f,0.9f), new Vector2f(0.02f,0.06f));
+		bullet = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/bulletIcon")), new Vector2f(-0.95f,0.9f), new Vector2f(0.02f,0.06f));
 		
 		startGuis = new ArrayList<GuiTexture>();
 		
-		gui2 = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/startscreen")), new Vector2f(0,0), new Vector2f(1f,1f));
-		gui5 = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/begin")), new Vector2f(-0.6f,0.075f), new Vector2f(0.30f,0.2f));
-		randomGui = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/random")), new Vector2f(-0.6f,-0.225f), new Vector2f(0.3f,0.08f));
-		soundIconGui = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/soundIcon")), new Vector2f(-0.85f,-0.85f), new Vector2f(0.03f,0.04f));
+		gui2 = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/startscreen")), new Vector2f(0,0), new Vector2f(1f,1f));
+		gui5 = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/begin")), new Vector2f(-0.6f,0.075f), new Vector2f(0.30f,0.2f));
+		randomGui = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/random")), new Vector2f(-0.6f,-0.225f), new Vector2f(0.3f,0.08f));
+		soundIconGui = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/soundIcon")), new Vector2f(-0.85f,-0.85f), new Vector2f(0.03f,0.04f));
 		
 		sniperGuis = new ArrayList<GuiTexture>();
-		sniperGui = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Gun/sniper_scope")), new Vector2f(0.15f,0.1f), new Vector2f(1.5f,1.5f));
+		sniperGui = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Gun/sniper_scope")), new Vector2f(0.15f,0.1f), new Vector2f(1.5f,1.5f));
 		
 		startGuis.add(gui2);startGuis.add(gui5);
 		
 		for (int i = 0; i < 24; i++){
 			float px = 0.0f; float py = 0.875f - 0.25f*i; if(i>7){px = 0.4f; py += 2;}if(i>15){px = 0.8f; py += 2;}
-			startGuis.add(new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/gunGui"+(i+1))), new Vector2f(px,py), Statics.gunScale));
+			startGuis.add(new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/gunGui"+(i+1))), new Vector2f(px,py), Statics.gunScale));
 		}
 		
 		startGuis.add(soundIconGui);
 		startGuis.add(randomGui);
 		
-		highLightTexture  = new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/highlight")), new Vector2f(0f,0f), new Vector2f(1f,1f));
+		highLightTexture  = new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/highlight")), new Vector2f(0f,0f), new Vector2f(1f,1f));
 		
 		sniperGuis.add(sniperGui);
 		
 		numbers = new ArrayList<GuiTexture>();
 		
 		for(int i = 0; i < 10; i++){
-			numbers.add(new GuiTexture(loader.loadTexture(MyPaths.makeTexturePath("Guis/"+i)), Statics.numberPosition, Statics.numberScale));
+			numbers.add(new GuiTexture(Loader.loadTexture(MyPaths.makeTexturePath("Guis/"+i)), Statics.numberPosition, Statics.numberScale));
 		}
 	}
 	

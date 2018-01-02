@@ -7,21 +7,47 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Vector3f;
 
 import components.Statics;
+import maps.Map;
 import renderEngine.MasterRenderer;
 import sound.Sound;
 import toolbox.GameMath;
+import toolbox.MousePicker;
 
 
 public class Gun extends MultiModeledEntity{
 	
 	/**
-	 * AK-47, SCAR-H, M9s, LMG,
-	 * shotgun, MP5, sniper, M4A1,
-	 * uzi, M6034, AK-74U, marvel rifle,
-	 * AW50, railgun, CZ805, famas,
-	 * flintlock, L85A2, LSAT, M14,
-	 * M39EMR, M98B, minigun, MK16
+	 * 00  AK-47
+	 * 01  SCAR-H
+	 * 02  M9s
+	 * 03  LMG
+	 * 04  shotgun
+	 * 05  MP5
+	 * 06  sniper
+	 * 07  M4A1
+	 * 08  uzi
+	 * 09  M6034
+	 * 10  AK-74U
+	 * 11  marvel rifle,
+	 * 12  AW50
+	 * 13  railgun
+	 * 14  CZ805
+	 * 15  famas
+	 * 16  flintlock
+	 * 17  L85A2
+	 * 18  LSAT
+	 * 19  M14
+	 * 20  M39EMR
+	 * 21  M98B
+	 * 22  minigun
+	 * 23  MK16
 	 */
+
+	private static final float Z_BODY_CENTER_OFFSET = 0;
+	private static final float Z_XZ_RADIUS = 1;
+	private static final float Z_Y_RADIUS = 3;
+
+	private static final float RELOAD_TIME = 75;
 	
 	private Vector3f gunPosition;
 	private float speed, zoomAmount, bobMult, deltaAmmo;
@@ -31,36 +57,37 @@ public class Gun extends MultiModeledEntity{
 	public float ammo, mobility, recoilAmount, power;
 	public int ROF, weaponID, maxAmmo, gunSoundID;
 	public boolean automatic, semiauto, shooting;
-	public float[] offsets, movingValues;
+	public float[] offsets = new float[4];
+	public float[] movingValues = new float[3];
+	
+	private Zombie nearestShotZombie = null;
+	private float nearstShotZombieDistSqrd = 0;
 
-	public Gun(TexturedModel model, Vector3f position, float rotX, float rotY,
-			float rotZ, Vector3f scale, int weapon, String tag) {
-		super(model, position, rotX, rotY, rotZ, scale, tag, false, 1, false);
-		
+	public Gun(TexturedModel model, int weapon, String tag) {
+		super(model, new Vector3f(0,0,0), 0, 0, 0, new Vector3f(1,1,1), tag, false, 1, false);
 		weaponID = weapon;
 	}
 	
 	private void startReload(){
 		if (Keyboard.isKeyDown(Keyboard.KEY_E)){
-			deltaAmmo = (maxAmmo - ammo)/(float)Statics.reloadTime;
-			cocked = true;
+			deltaAmmo = (maxAmmo - ammo)/RELOAD_TIME;
+			cocked = reloading = true;
 			semiautoCounter = 0;
-			reloading = true;
 		}
 	}
 	
 	private void reload(){
-		if(reloading){
-			if(reloadingCounter == Statics.reloadSoundTime){
-				Sound.playSound(Statics.reloadSoundID);
-			}
-			if (reloadingCounter < Statics.reloadTime){
-				ammo += deltaAmmo;
-				reloadingCounter++;
-			}else {
-				reloading = false;
-				reloadingCounter = 0;
-			}
+		if(!reloading)
+			return;
+		if(reloadingCounter == Statics.reloadSoundTime)
+			Sound.playSound(Statics.reloadSoundID);
+		if (reloadingCounter < RELOAD_TIME){
+			ammo += deltaAmmo;
+			reloadingCounter++;
+		}
+		else {
+			reloading = false;
+			reloadingCounter = 0;
 		}
 	}
 	
@@ -125,90 +152,94 @@ public class Gun extends MultiModeledEntity{
 		}
 	}
 	
-	public void update(Camera camera, MasterRenderer masterRenderer, boolean starting){
+	public void update(Camera camera, MousePicker picker, boolean starting){
 		
 		moveWithCamera(camera);
 		gunPosition = getPosition();
 		
-		if(!starting){
-			
-			startReload();
-			reload();
-			notifyGunOut();
-			shoot();
-			recoil();
-			cock();
-			bob();
-			scope(masterRenderer);
-		}
-		
 		gunPosition = GameMath.moveGunFromPlayer(gunPosition, movingValues[0],
 				camera.getYaw()+movingValues[1]-zoomAmount/movingValues[2] + bobMult * bobCounter/Statics.bobSpeed);
+		
+		if(starting)
+			return;
+			
+		startReload();
+		reload();
+		notifyGunOut();
+		shoot();
+		recoil();
+		cock();
+		scope();
+		checkKilledZombies(picker);
 	}
 	
-	private void bob(){
-		if(Keyboard.isKeyDown(Keyboard.KEY_W) || Keyboard.isKeyDown(Keyboard.KEY_S) || 
-				Keyboard.isKeyDown(Keyboard.KEY_D) || Keyboard.isKeyDown(Keyboard.KEY_A)){
+	public void checkKilledZombies(MousePicker picker) {
+		
+		if(!shooting)
+			return;
+		
+		nearstShotZombieDistSqrd = 2000000000;
+		nearestShotZombie = null;
+		
+		for (Zombie zombie : Map.getZombies()) {
+
+			if(!zombie.isInFrustum())
+				continue;
 			
-			if (gunForward){
-				bobCounter++;
-				if (bobCounter >= Statics.bobAmount){
-					gunForward = false;
-				}
-			} else {
-				bobCounter--;
-				if (bobCounter <= -Statics.bobAmount){
-					gunForward = true;
+			Vector3f zpos = zombie.getPosition();
+			Vector3f zscale = zombie.getScale();
+			
+			if(picker.inEllipse(new Vector3f(zpos.x, zpos.y+(offsets[2]+Z_BODY_CENTER_OFFSET), zpos.z),
+					Z_XZ_RADIUS*zscale.x, Z_Y_RADIUS*zscale.y, Z_XZ_RADIUS*zscale.z)){
+				
+				float distSqrd = zombie.distSqrdToEnt(gunPosition);
+				if(distSqrd < nearstShotZombieDistSqrd) {
+					nearstShotZombieDistSqrd = distSqrd;
+					nearestShotZombie = zombie;
 				}
 			}
 		}
-		bobMult = 1;
-		if (!Mouse.isButtonDown(1)){
-			bobMult = 2.5f;
+		if(nearestShotZombie != null)
+			nearestShotZombie.getShot(power);
+	}
+	
+	public void bob(){
+		if (gunForward){
+			bobCounter++;
+			gunForward = (bobCounter <= Statics.bobAmount);
 		}
+		else {
+			bobCounter--;
+			gunForward = (bobCounter <= -Statics.bobAmount);
+		}
+		bobMult = Mouse.isButtonDown(1) ? 1 : 2.5f;
 	} 
 	
-	private void scope(MasterRenderer masterRenderer){
+	private void scope(){
 		
 		if(weaponID != 6 && weaponID != 12){
-			if(Mouse.isButtonDown(1) && zoomAmount < Statics.normalZoomAmount){
+			if(Mouse.isButtonDown(1) && zoomAmount < Statics.normalZoomAmount)
 				zoomAmount += Statics.normalZoomSpeed;
-			}else if (!Mouse.isButtonDown(1) && zoomAmount > 0){
+			else if (!Mouse.isButtonDown(1) && zoomAmount > 0)
 				zoomAmount -= Statics.normalZoomSpeed;
-			}
-		}else {
+		}
+		else {
 			float increase = 1;
-			if (weaponID == 12){
+			if (weaponID == 12)
 				increase = 1.5f;
-			}
-			if(Mouse.isButtonDown(1) && zoomAmount < Statics.sniperZoomAmount){
+			if(Mouse.isButtonDown(1) && zoomAmount < Statics.sniperZoomAmount)
 				zoomAmount += Statics.sniperZoomSpeed*increase;
-				masterRenderer.setZoomAmount(zoomAmount);
-			}else if (!Mouse.isButtonDown(1) && zoomAmount > 0){
+			else if (!Mouse.isButtonDown(1) && zoomAmount > 0)
 				zoomAmount -= Statics.sniperZoomSpeed*increase;
-				masterRenderer.setZoomAmount(zoomAmount);
-			}
-			
+			MasterRenderer.setZoomAmount(zoomAmount);
 		}
 	}
 	
 	private void moveWithCamera(Camera camera){
 		
-		setPosition(new Vector3f(camera.getPosition().x, camera.getPosition().y+offsets[0],
-				camera.getPosition().z));
+		setPosition(new Vector3f(camera.getPosition().x, camera.getPosition().y+offsets[0], camera.getPosition().z));
 		
 		setRotZ(camera.getPitch()+offsets[1]);
 		setRotY(-camera.getYaw()+Statics.rotYShift);
 	}
-	
-	public void setSpecificData(Vector3f scale, boolean transparency, int ROF, boolean automatic, int maxAmmo, float recoilAmount, float power, float[] offsets, float mobility,
-			int gunSoundID, float[] movingValues, boolean semiauto){
-	
-		this.setScale(scale); this.getModel().getTexture().setHasTransparency(transparency);
-		this.ROF = ROF; this.automatic = automatic; this.maxAmmo = maxAmmo;
-		this.recoilAmount = recoilAmount; this.power = power; this.offsets = offsets;
-		this.mobility = mobility; this.gunSoundID = (int) gunSoundID;
-		this.movingValues = movingValues; this.semiauto = semiauto; this.ammo = maxAmmo;
-	}
-	
 }

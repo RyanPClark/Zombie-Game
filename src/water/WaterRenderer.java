@@ -33,17 +33,17 @@ public class WaterRenderer {
     
     private int dudvTexture;
  
-    public WaterRenderer(Loader loader, WaterShader shader, Matrix4f projectionMatrix, WaterFrameBuffers fbos) {
+    public WaterRenderer(WaterShader shader, Matrix4f projectionMatrix, WaterFrameBuffers fbos) {
         this.shader = shader;
         this.fbos = fbos;
         
-        dudvTexture = loader.loadTexture(dudv);
+        dudvTexture = Loader.loadTexture(dudv);
         
         shader.start();
         shader.connectTextureUnits();
         shader.loadProjectionMatrix(projectionMatrix);
         shader.stop();
-        setUpVAO(loader);
+        setUpVAO();
     }
  
     public void render(List<WaterTile> water, Camera camera) {
@@ -83,10 +83,10 @@ public class WaterRenderer {
         shader.stop();
     }
  
-    private void setUpVAO(Loader loader) {
+    private void setUpVAO() {
         // Just x and z vectex positions here, y is set to 0 in v.shader
         float[] vertices = { -1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1 };
-        quad = loader.loadToVAO(vertices, 2);
+        quad = Loader.loadToVAO(vertices, 2);
     }
  
 }
