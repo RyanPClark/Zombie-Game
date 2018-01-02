@@ -1,7 +1,4 @@
-scaleX: 0.1
-scaleY: 0.1
-scaleZ: 0.1
-Transparency: false
+scale: 0.1
 ROF: 32
 Automatic: false
 MaxAmmo: 8
